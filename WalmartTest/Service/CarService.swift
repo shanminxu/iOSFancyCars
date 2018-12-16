@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import RxSwift
+import Moya
 
 class CarService {
     func getCarsResponse() -> String {
@@ -23,5 +23,54 @@ class CarService {
         default :
             return "{\"available\": \"Out of Stock\"}"
         }
+    }
+}
+
+let CarServiceProvider = MoyaProvider<CarAPI>()
+
+enum CarAPI {
+    case carService
+    case availabilityService(Int)
+}
+
+extension CarAPI: TargetType {
+    var baseURL: URL {
+        return URL(string: "http://myfancycar")!
+    }
+    
+    var path: String {
+        switch self {
+        case .carService:
+            return "/cars"
+        case .availabilityService(_):
+            return "/availability"
+        }
+    }
+    
+    var method: Moya.Method {
+        return .get
+    }
+    
+    var task: Task {
+        switch self {
+        case .carService:
+            return .requestPlain
+        case .availabilityService(let carId):
+            var params: [String: Any] = [:]
+            params["id"] = carId
+            return .requestParameters(parameters: params, encoding: URLEncoding.default)
+        }
+    }
+    
+    var sampleData: Data {
+        return "{}".data(using: String.Encoding.utf8)!
+    }
+    
+    var validate: Bool {
+        return false
+    }
+    
+    var headers: [String: String]? {
+        return nil
     }
 }
